@@ -43,10 +43,10 @@ void setup()
 {
 //lets connect to wifi first before any other initialization
 ser.begin(9600);
-send_command("AT+RST\r\n", 2000, DEBUG); //reset module
-send_command("AT+CWMODE=1\r\n", 1000, DEBUG); //set station mode
-send_command("AT+CWJAP=\"+ssid+\",\"+password+\"\r\n", 2000, DEBUG);   //connect wifi network
-while(!esp.find("OK")) { //wait for connection
+Serial.println(send_command("AT+RST\r\n", 2000, DEBUG)); //reset module
+Serial.println(send_command("AT+CWMODE=1\r\n", 1000, DEBUG)); //set station mode
+Serial.println(send_command("AT+CWJAP=\""+ ssid + "\",\"" + password + "\"\r\n", 2000, DEBUG));   //connect wifi network
+while(!ser.find("OK")) { //wait for connection
   Serial.println("Connected");
   }
 
@@ -255,7 +255,7 @@ String send_command(String command, const int timeout, boolean debug)
   long int time = millis();
   while ( (time + timeout) > millis()){
     while (ser.available()){
-      char c = esp.read();
+      char c = ser.read();
       response += c;
     }
   }
@@ -277,10 +277,10 @@ void updatedata(){
     return;
   }
   command = Api_key ;
-  getStr +="&field1=";
-  getStr +=String(temp);
-  getStr +="&field2=";
-  getStr +=String(pulse);
+  command +="&field1=";
+  command +=String(temp);
+  command +="&field2=";
+  command +=String(pulse);
   command += "\r\n";
   Serial.print("AT+CIPSEND=");
   ser.print("AT+CIPSEND=");
@@ -294,6 +294,6 @@ void updatedata(){
 
    Serial.println("AT+CIPCLOSE");
    ser.println("AT+CIPCLOSE");
-    error=1;
+   Serial.println("error sending data");
   }
   }
