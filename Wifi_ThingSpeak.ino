@@ -5,10 +5,13 @@ LiquidCrystal_I2C lcd(0x27,16,2);
 #define DEBUG true
 #define RX 2
 #define TX 3
+#define IP "184.106.153.149"
+String Api_key = "GET /update?key=5A8EJDGU3CPAD7KE";
+
 
 float pulse = 0;
 float temp = 0;
-SoftwareSerial ser(9,10);
+SoftwareSerial ser(RX,TX);
 String ssid = "Sheets";
 String password = "zxcvbnm6";
 String apiKey = "5A8EJDGU3CPAD7KE";
@@ -39,10 +42,10 @@ volatile boolean secondBeat = false; // used to seed rate array so we startup wi
 void setup()
 {
 //lets connect to wifi first before any other initialization
-send_command("AT+RST\r\n", 2000, DEBUG);
-sendCommand("AT",5,"OK");
-sendCommand("AT+CWMODE=1",5,"OK");
-sendCommand("AT+CWJAP=""+ ssid +"",""+ password +""",15,"OK");
+ser.begin(9600);
+send_command("AT+RST\r\n", 2000, DEBUG); //reset module
+send_command("AT+CWMODE=1\r\n", 1000, DEBUG); //set station mode
+send_command("AT+CWJAP=\"+ssid+\",\"+password+\"\r\n", 2000, DEBUG);   //connect wifi network
 while(!esp.find("OK")) { //wait for connection
   Serial.println("Connected");
   }
@@ -73,23 +76,23 @@ delay(5000);
 lcd.clear();
 lcd.setCursor(0,0);
 lcd.print("Getting Data....");
-ser.begin(9600);
-ser.println("AT");
-delay(1000);
-ser.println("AT+GMR");
-delay(1000);
-ser.println("AT+CWMODE=3");
-delay(1000);
-ser.println("AT+RST");
-delay(5000);
-ser.println("AT+CIPMUX=1");
-delay(1000);
+//ser.begin(9600);
+//ser.println("AT");
+//delay(1000);
+//ser.println("AT+GMR");
+//delay(1000);
+//ser.println("AT+CWMODE=3");
+//delay(1000);
+//ser.println("AT+RST");
+//delay(5000);
+//ser.println("AT+CIPMUX=1");
+//delay(1000);
 
-String cmd="AT+CWJAP=\"Alexahome\",\"98765432\"";
-ser.println(cmd);
-delay(1000);
-ser.println("AT+CIFSR");
-delay(1000);
+//String cmd="AT+CWJAP=\"Alexahome\",\"98765432\"";
+//ser.println(cmd);
+//delay(1000);
+//ser.println("AT+CIFSR");
+//delay(1000);
 }
 
 // Where the Magic Happens
@@ -199,7 +202,7 @@ void esp_8266()
 String cmd = "AT+CIPSTART=4,\"TCP\",\"";
 cmd += "184.106.153.149"; // api.thingspeak.com
 cmd += "\",80";
-ser.println(cmd);
+//ser.println(cmd);
 Serial.println(cmd);
 if(ser.find("Error"))
 {
@@ -216,12 +219,12 @@ getStr += "\r\n\r\n";
 // send data length
 cmd = "AT+CIPSEND=4,";
 cmd += String(getStr.length());
-ser.println(cmd);
+//ser.println(cmd);
 Serial.println(cmd);
-delay(1000);
-ser.print(getStr);
+//delay(1000);
+//ser.print(getStr);
 Serial.println(getStr); //thingspeak needs 15 sec delay between updates
-delay(3000);
+//delay(3000);
 }
 void Output()
 {
@@ -242,5 +245,55 @@ lcd.setCursor(7,1);
 lcd.print(temp);
 lcd.setCursor(13,1);
 lcd.print("F");
+updatedata();
 }
 
+String send_command(String command, const int timeout, boolean debug)
+{
+  String response = "";
+  ser.print(command);
+  long int time = millis();
+  while ( (time + timeout) > millis()){
+    while (ser.available()){
+      char c = esp.read();
+      response += c;
+    }
+  }
+  if (debug){
+    Serial.print(response);
+  }
+  return response;
+}
+
+void updatedata(){
+    delay(15000);
+  String command = "AT+CIPSTART=\"TCP\",\"";
+  command += IP;
+  command += "\",80";
+  Serial.println(command);
+  ser.println(command);
+  delay(2000);
+  if(ser.find("Error")){
+    return;
+  }
+  command = Api_key ;
+  getStr +="&field1=";
+  getStr +=String(temp);
+  getStr +="&field2=";
+  getStr +=String(pulse);
+  command += "\r\n";
+  Serial.print("AT+CIPSEND=");
+  ser.print("AT+CIPSEND=");
+  Serial.println(command.length());
+  ser.println(command.length());
+  if(ser.find(">")){
+    Serial.print(command);
+    ser.print(command);
+  }
+  else{
+
+   Serial.println("AT+CIPCLOSE");
+   ser.println("AT+CIPCLOSE");
+    error=1;
+  }
+  }
