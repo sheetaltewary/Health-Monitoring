@@ -1,6 +1,11 @@
 #include <LiquidCrystal_I2C.h>
 LiquidCrystal_I2C lcd(0x27,16,2);
 #include <SoftwareSerial.h>
+
+#define DEBUG true
+#define RX 2
+#define TX 3
+
 float pulse = 0;
 float temp = 0;
 SoftwareSerial ser(9,10);
@@ -33,6 +38,15 @@ volatile boolean secondBeat = false; // used to seed rate array so we startup wi
 
 void setup()
 {
+//lets connect to wifi first before any other initialization
+send_command("AT+RST\r\n", 2000, DEBUG);
+sendCommand("AT",5,"OK");
+sendCommand("AT+CWMODE=1",5,"OK");
+sendCommand("AT+CWJAP=""+ ssid +"",""+ password +""",15,"OK");
+while(!esp.find("OK")) { //wait for connection
+  Serial.println("Connected");
+  }
+
 lcd.init();
 lcd.init();
 lcd.backlight();
