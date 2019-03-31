@@ -45,7 +45,7 @@ void setup()
 ser.begin(9600);
 send_command("AT+RST\r\n", 2000, DEBUG); //reset module
 send_command("AT+CWMODE=1\r\n", 1000, DEBUG); //set station mode
-send_command("AT+CWJAP=""+ ssid +"",""+ password +""", 2000, DEBUG);   //connect wifi network
+send_command("AT+CWJAP=\""+ ssid + "\",\"" + password + "\"\r\n", 2000, DEBUG);   //connect wifi network
 while(!esp.find("OK")) { //wait for connection
   Serial.println("Connected");
   }
